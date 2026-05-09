@@ -1,0 +1,56 @@
+Setting Token/Credit Limits Per User in Cortex Code
+
+  There are two built-in parameters that let account admins set daily estimated credit usage limits per user on a rolling 24-hour
+  window:
+
+  ┌───────────────────────────────────────────────────────┬──────────────────────────┐
+  │ Parameter                                             │ Controls                 │
+  ├───────────────────────────────────────────────────────┼──────────────────────────┤
+  │ CORTEX_CODE_CLI_DAILY_EST_CREDIT_LIMIT_PER_USER       │ Cortex Code CLI          │
+  ├───────────────────────────────────────────────────────┼──────────────────────────┤
+  │ CORTEX_CODE_SNOWSIGHT_DAILY_EST_CREDIT_LIMIT_PER_USER │ Cortex Code in Snowsight │
+  └───────────────────────────────────────────────────────┴──────────────────────────┘
+
+  How it works
+
+  ┌─────────────────┬─────────────────────────────────────────────────────────┐
+  │ Value           │ Behavior                                                │
+  ├─────────────────┼─────────────────────────────────────────────────────────┤
+  │ -1 (default)    │ No limit (unlimited access)                             │
+  ├─────────────────┼─────────────────────────────────────────────────────────┤
+  │ 0               │ Access blocked entirely                                 │
+  ├─────────────────┼─────────────────────────────────────────────────────────┤
+  │ Positive number │ Blocked when 24-hour estimated usage exceeds this value │
+  └─────────────────┴─────────────────────────────────────────────────────────┘
+
+  Set at the account level (applies to all users)
+
+    ALTER ACCOUNT SET CORTEX_CODE_CLI_DAILY_EST_CREDIT_LIMIT_PER_USER = 20;
+    ALTER ACCOUNT SET CORTEX_CODE_SNOWSIGHT_DAILY_EST_CREDIT_LIMIT_PER_USER = 20;
+
+  Set at the user level (overrides account-level)
+
+    ALTER USER jsmith SET CORTEX_CODE_CLI_DAILY_EST_CREDIT_LIMIT_PER_USER = 10;
+    ALTER USER jsmith SET CORTEX_CODE_SNOWSIGHT_DAILY_EST_CREDIT_LIMIT_PER_USER = 10;
+
+  Remove limits
+
+    -- Remove account-level limit
+    ALTER ACCOUNT UNSET CORTEX_CODE_CLI_DAILY_EST_CREDIT_LIMIT_PER_USER;
+
+    -- Remove user-level override (falls back to account-level)
+    ALTER USER jsmith UNSET CORTEX_CODE_CLI_DAILY_EST_CREDIT_LIMIT_PER_USER;
+
+  Example: Mixed configuration
+
+    -- Default limit for everyone
+    ALTER ACCOUNT SET CORTEX_CODE_CLI_DAILY_EST_CREDIT_LIMIT_PER_USER = 20;
+
+    -- Higher limit for a power user
+    ALTER USER power_user SET CORTEX_CODE_CLI_DAILY_EST_CREDIT_LIMIT_PER_USER = 50;
+
+    -- Block a specific user entirely
+    ALTER USER restricted_user SET CORTEX_CODE_SNOWSIGHT_DAILY_EST_CREDIT_LIMIT_PER_USER = 0;
+
+  When the limit is reached, the user gets an error and is blocked until the rolling 24-hour usage drops below the threshold. Requires
+  ACCOUNTADMIN role to set.
